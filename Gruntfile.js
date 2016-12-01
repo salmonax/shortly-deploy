@@ -82,6 +82,14 @@ module.exports = function(grunt) {
 
     shell: {
       prodServer: {
+        command: [
+          'git add .',
+          'git commit -m "Deployment commit on: ' + (function() {
+            var date = new Date();
+            return date.toString(); 
+          })() + '"',
+          'git push live master'
+        ].join('&&')
       }
     },
   });
