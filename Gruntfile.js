@@ -121,7 +121,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('upload', function(n) {
     if (grunt.option('prod')) {
-
+      grunt.task.run([ 'shell:prodServer' ]);
       //push it up to our droplet --use shell commands
       // add your production server task here
 
