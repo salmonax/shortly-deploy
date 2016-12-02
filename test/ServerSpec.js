@@ -2,6 +2,7 @@ var request = require('supertest');
 var express = require('express');
 var expect = require('chai').expect;
 var app = require('../server-config.js');
+var util = require('../lib/utility');
 
 var db = require('../app/config');
 var User = require('../app/models/user');
@@ -11,7 +12,7 @@ var Link = require('../app/models/link');
 // NOTE: these tests are designed for mongo!
 /////////////////////////////////////////////////////
 
-xdescribe('', function() {
+describe('', function() {
 
   beforeEach(function(done) {
     // Log out currently signed in user
@@ -42,12 +43,15 @@ xdescribe('', function() {
     describe('Shortening links:', function() {
 
       it('Responds with the short code', function(done) {
+        console.log('RESPONDS WITH SHORT CODE');
         request(app)
           .post('/links')
           .send({
             'url': 'http://www.roflzoo.com/'})
           .expect(200)
           .expect(function(res) {
+            console.log('51: ', res.body.url);
+            console.log('51: ', res.body.code);
             expect(res.body.url).to.equal('http://www.roflzoo.com/');
             expect(res.body.code).to.be.ok;
           })
@@ -91,20 +95,25 @@ xdescribe('', function() {
     describe('With previously saved urls: ', function() {
 
       beforeEach(function(done) {
+        var url = 'http://www.roflzoo.com/';
         link = new Link({
-          url: 'http://www.roflzoo.com/',
+          url: url,
           title: 'Funny pictures of animals, funny dog pictures',
           baseUrl: 'http://127.0.0.1:4568',
-          visits: 0
+          visits: 0,
+          code: util.generateCode(url)
         });
 
         link.save(function() {
+          console.log('CALL BACK ON LINK SAVE!!!');
           done();
         });
       });
 
       it('Returns the same shortened code if attempted to add the same URL twice', function(done) {
         var firstCode = link.code;
+        console.log(firstCode);
+        console.log('----- 116 -----');
         request(app)
           .post('/links')
           .send({
@@ -112,6 +121,8 @@ xdescribe('', function() {
           .expect(200)
           .expect(function(res) {
             var secondCode = res.body.code;
+            console.log('----- 124 -----');
+            console.log(res.body.code);
             expect(secondCode).to.equal(firstCode);
           })
           .end(done);
@@ -119,11 +130,13 @@ xdescribe('', function() {
 
       it('Shortcode redirects to correct url', function(done) {
         var sha = link.code;
+        console.log(link.code);
         request(app)
           .get('/' + sha)
           .expect(302)
           .expect(function(res) {
             var redirect = res.headers.location;
+            //console.log('132--------------', res.headers.location);
             expect(redirect).to.equal('http://www.roflzoo.com/');
           })
           .end(done);
